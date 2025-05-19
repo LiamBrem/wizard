@@ -1,5 +1,6 @@
 import random
 from deck import Deck, Card
+from simulation import simulate_trick_outcome, prob_win
 
 
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', 'W', 'E']
@@ -94,6 +95,44 @@ class EvolvedPlayer(Player):
             card = min(legal, key=lambda c: self.evaluate_card(c, trump_suit))
         else:
             card = max(legal, key=lambda c: self.evaluate_card(c, trump_suit))
+
+        self.hand.remove(card)
+        return card
+    
+
+
+class ProbabilityPlayer(Player):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def make_bid(self, trump_suit, round_number, position, total_players, bids_so_far=None):
+        # Bids based purely on the summed probability of each card winning a trick.
+        
+        probs = [
+            prob_win(card, self.hand, trump_suit, total_players, round_number)
+            for card in self.hand
+        ]
+
+        expected_tricks = sum(probs)
+        self.bid = max(0, min(round_number, round(expected_tricks)))
+        return self.bid
+    
+    def play_card(self, trick_so_far, lead_suit, trump_suit, played_cards):
+        legal = self.legal_cards(lead_suit)
+
+        # Use prob_win instead of evaluate_card
+        if self.tricks_won >= self.bid:
+            # Defend (lose)
+            card = min(
+                legal,
+                key=lambda c: prob_win(c, self.hand, trump_suit, 4, len(self.hand))
+            )
+        else:
+            # Attack (win)
+            card = max(
+                legal,
+                key=lambda c: prob_win(c, self.hand, trump_suit, 4, len(self.hand))
+            )
 
         self.hand.remove(card)
         return card

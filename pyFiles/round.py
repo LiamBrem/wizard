@@ -12,6 +12,8 @@ class Round:
         self.trump_suit = None
         self.leader_index = 0  # Rotates each round
 
+
+
     def setup_round(self):
         self.deck.reset()
         # Deal cards
@@ -31,6 +33,8 @@ class Round:
 
         #print(f"Trump card: {self.trump_card} → Trump suit: {self.trump_suit}")
 
+
+
     def collect_bids(self):
         #print("\n--- Bidding Phase ---")
         bids = []
@@ -38,6 +42,8 @@ class Round:
             bid = player.make_bid(self.trump_suit, self.round_number, i, len(self.players), bids)
             bids.append(bid)
             #print(f"{player.name} bids {bid}")
+
+
 
     def play_tricks(self):
         #print("\n--- Playing Tricks ---")
@@ -60,6 +66,8 @@ class Round:
             #print(f"{self.players[winner_index].name} wins the trick")
             self.leader_index = winner_index  # Winner leads next
 
+
+
     def resolve_trick(self, trick, lead_suit):
         def card_strength(card):
             if card.rank == 'W':
@@ -76,6 +84,27 @@ class Round:
         winner = max(trick, key=lambda x: card_strength(x[1]))
         return winner[0]
     
+
+
+    @staticmethod
+    def resolve_trick_static(trick, lead_suit, trump_suit):
+        def card_strength(card):
+            if card.rank == 'W':
+                return (3, 0)  # Highest tier
+            elif card.rank == 'E':
+                return (0, 0)  # Lowest tier
+            elif trump_suit and card.suit == trump_suit:
+                return (2, Deck.ranks.index(card.rank))
+            elif lead_suit and card.suit == lead_suit:
+                return (1, Deck.ranks.index(card.rank))
+            else:
+                return (0, 0)
+
+        winner = max(trick, key=lambda x: card_strength(x[1]))
+        return winner[0]
+    
+
+
     def calculate_scores(self):
         scores = {}
         for player in self.players:
@@ -85,11 +114,15 @@ class Round:
                 scores[player.name] = -abs(10 * (player.tricks_won - player.bid))
         return scores
 
+
+
     def show_results(self):
         pass
         #print("\n--- Round Results ---")
         #for player in self.players:
             #print(f"{player.name} - Bid: {player.bid}, Tricks Won: {player.tricks_won}")
+
+
 
     def play_round(self):
         self.setup_round()

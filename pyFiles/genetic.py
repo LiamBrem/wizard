@@ -48,6 +48,7 @@ def evaluate_generation(population, games_per_bot=GAMES_PER_GEN):
     return scores
 
 
+
 def evolve():
     population = [EvolvedPlayer(f"Bot{i}", Genome()) for i in range(POP_SIZE)]
 
