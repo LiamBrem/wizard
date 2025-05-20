@@ -51,6 +51,7 @@ def evaluate_generation(population, games_per_bot=GAMES_PER_GEN):
 
 def evolve():
     population = [EvolvedPlayer(f"Bot{i}", Genome()) for i in range(POP_SIZE)]
+    genome_history = []
 
     best_overall = None
     best_score = float("-inf")
@@ -66,6 +67,10 @@ def evolve():
 
         top_bot = elites[0]
         top_score = scores[top_bot.name]
+
+        genome_log = {"generation": gen}
+        genome_log.update(top_bot.genome.genes)  # Adds each gene key-value pair
+        genome_history.append(genome_log)
 
         #print(f"Gen {gen:>3} | Best Score: {top_score:>6.2f}")
 
@@ -93,8 +98,9 @@ def evolve():
 
         population = new_population
 
+    df_genomes = pd.DataFrame(genome_history)
     df_history = pd.DataFrame(history)
-    return df_history, best_genome_data
+    return df_history, best_genome_data, df_genomes
 
 
 

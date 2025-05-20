@@ -1,6 +1,10 @@
 import random
 from deck import Deck, Card
 from simulation import simulate_trick_outcome, prob_win
+import pandas as pd
+import random
+from round import Round
+from genome import Genome
 
 
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', 'W', 'E']
@@ -136,3 +140,52 @@ class ProbabilityPlayer(Player):
 
         self.hand.remove(card)
         return card
+
+
+
+
+
+def compare_players(evolved_genome, games=1000, num_players=5):
+    evo_bot = EvolvedPlayer("Evolved", Genome(genes=evolved_genome))
+    prob_bot = ProbabilityPlayer("Prob")
+    
+    bots = [evo_bot, prob_bot]
+    results = {bot.name: {"score": 0, "hit_bid": 0, "bids": []} for bot in bots}
+    
+    #baseline_names = [f"Bot{i}" for i in range(num_players - 2)]
+    #baseline_bots = [Player(name) for name in baseline_names]
+
+    baseline_bots = [Player(f"Baseline{i}") for i in range(20)]
+
+    for _ in range(games):
+        for bot in bots:
+            players = [bot] + random.sample(baseline_bots, k=num_players - 1)
+            round_number = random.randint(1, 60 // num_players)
+            game = Round([p.name for p in players], round_number)
+            game.players = players
+            game.play_round()
+
+            for p in players:
+                if p.name == bot.name:
+                    score = 20 * p.bid if p.tricks_won == p.bid else -abs(10 * (p.tricks_won - p.bid))
+                    results[p.name]["score"] += score
+                    results[p.name]["hit_bid"] += int(p.tricks_won == p.bid)
+                    results[p.name]["bids"].append(p.bid)
+                p.tricks_won = 0
+                p.bid = 0
+
+    df_summary = pd.DataFrame([
+        {
+            "Bot": name,
+            "Avg Score": res["score"] / games,
+            "Hit Bid %": res["hit_bid"] / games * 100,
+        }
+        for name, res in results.items()
+    ])
+
+    df_bids = pd.DataFrame({
+        name: pd.Series(res["bids"])
+        for name, res in results.items()
+    })
+
+    return df_summary, df_bids
