@@ -94,6 +94,11 @@ class EvolvedPlayer(Player):
     def play_card(self, trick_so_far, lead_suit, trump_suit, played_cards):
         legal = self.legal_cards(lead_suit)
 
+
+        if not legal:
+            raise ValueError(f"No legal cards for player {self.name}. Hand: {self.hand}, Lead suit: {lead_suit}")
+
+
         # Play defensively if you've hit your bid
         if self.tricks_won >= self.bid:
             card = min(legal, key=lambda c: self.evaluate_card(c, trump_suit))
@@ -140,8 +145,87 @@ class ProbabilityPlayer(Player):
 
         self.hand.remove(card)
         return card
+    
+
+class HumanPlayer(Player):
+    def __init__(self, name):
+        super().__init__(name)
+        self._pending_bid = None
+        self._pending_card = None
+
+    def set_bid(self, bid_value):
+        """Set bid from the Streamlit interface."""
+        self._pending_bid = bid_value
+
+    def set_card(self, card):
+        """Set card from the Streamlit interface (must be a Card object)."""
+        self._pending_card = card
+
+    def make_bid(self, trump_suit, round_number, position, total_players, bids_so_far=None):
+        if self._pending_bid is None:
+            raise ValueError("Bid not set for human player")
+        self.bid = self._pending_bid
+        self._pending_bid = None  # reset
+        return self.bid
+
+    def play_card(self, trick_so_far, lead_suit, trump_suit, played_cards=None):
+        legal = self.legal_cards(lead_suit)
+        if self._pending_card is None:
+            raise ValueError("Card not set for human player")
+        if self._pending_card not in legal:
+            raise ValueError(f"Invalid card: {self._pending_card}. Legal: {legal}")
+        card = self._pending_card
+        self._pending_card = None
+        self.hand.remove(card)
+        return card
 
 
+def validate_probability_player(games=100, num_players=5):
+    prob_bot = ProbabilityPlayer("ProbabilityBot")
+    baseline_names = [f"Bot{i}" for i in range(num_players - 1)]
+    baseline_bots = [Player(name) for name in baseline_names]
+
+    score_total = 0
+    hit_bid_count = 0
+    bid_distribution = []
+
+    for _ in range(games):
+        players = [prob_bot] + random.sample(baseline_bots, k=num_players - 1)
+        round_number = random.randint(1, 60 // num_players)
+        game = Round([p.name for p in players], round_number)
+        game.players = players
+        game.play_round()
+
+        for p in players:
+            if p.name == "ProbabilityBot":
+                bid_distribution.append(p.bid)
+                score = 20 if p.tricks_won == p.bid else -abs(p.tricks_won - p.bid)
+                score_total += score
+                if p.tricks_won == p.bid:
+                    hit_bid_count += 1
+                p.tricks_won = 0
+                p.bid = 0
+            else:
+                p.tricks_won = 0
+                p.bid = 0
+
+    avg_score = score_total / games
+    hit_rate = hit_bid_count / games
+
+    bid_counts = pd.Series(bid_distribution).value_counts().sort_index()
+    bid_percentages = (bid_counts / len(bid_distribution) * 100).round(2)
+
+    bid_freq = pd.DataFrame({
+        "Count": bid_counts,
+        "Percent": bid_percentages.astype(str) + "%"
+    })
+
+    df = pd.DataFrame({
+        "Metric": ["Avg Score", "Hit Bid %", "Games"],
+        "Value": [f"{avg_score:.2f}", f"{hit_rate:.2%}", f"{games}"]
+    })
+
+    return df, bid_freq
 
 
 

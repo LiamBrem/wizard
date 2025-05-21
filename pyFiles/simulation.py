@@ -1,8 +1,7 @@
 from deck import Deck, Card
-from round import Round
+from utils import resolve_trick_static
 import random
 import pandas as pd
-from player import ProbabilityPlayer, Player
 
 
 def simulate_trick_outcome(self_card, player_hand, trump_suit, lead_suit, num_players, simulations=1000):
@@ -24,7 +23,7 @@ def simulate_trick_outcome(self_card, player_hand, trump_suit, lead_suit, num_pl
             remaining_deck.remove(opp_card)
 
         # Step 3: Resolve trick
-        winner_idx = Round.resolve_trick_static(simulated_trick, lead_suit, trump_suit)
+        winner_idx = resolve_trick_static(simulated_trick, lead_suit, trump_suit)
         if winner_idx == 0:
             win_count += 1
 
@@ -43,49 +42,3 @@ def prob_win(card, hand, trump_suit, num_players, round_number, use_cutoff=2):
     )
 
 
-def validate_probability_player(games=100, num_players=5):
-    prob_bot = ProbabilityPlayer("ProbabilityBot")
-    baseline_names = [f"Bot{i}" for i in range(num_players - 1)]
-    baseline_bots = [Player(name) for name in baseline_names]
-
-    score_total = 0
-    hit_bid_count = 0
-    bid_distribution = []
-
-    for _ in range(games):
-        players = [prob_bot] + random.sample(baseline_bots, k=num_players - 1)
-        round_number = random.randint(1, 60 // num_players)
-        game = Round([p.name for p in players], round_number)
-        game.players = players
-        game.play_round()
-
-        for p in players:
-            if p.name == "ProbabilityBot":
-                bid_distribution.append(p.bid)
-                score = 20 if p.tricks_won == p.bid else -abs(p.tricks_won - p.bid)
-                score_total += score
-                if p.tricks_won == p.bid:
-                    hit_bid_count += 1
-                p.tricks_won = 0
-                p.bid = 0
-            else:
-                p.tricks_won = 0
-                p.bid = 0
-
-    avg_score = score_total / games
-    hit_rate = hit_bid_count / games
-
-    bid_counts = pd.Series(bid_distribution).value_counts().sort_index()
-    bid_percentages = (bid_counts / len(bid_distribution) * 100).round(2)
-
-    bid_freq = pd.DataFrame({
-        "Count": bid_counts,
-        "Percent": bid_percentages.astype(str) + "%"
-    })
-
-    df = pd.DataFrame({
-        "Metric": ["Avg Score", "Hit Bid %", "Games"],
-        "Value": [f"{avg_score:.2f}", f"{hit_rate:.2%}", f"{games}"]
-    })
-
-    return df, bid_freq
