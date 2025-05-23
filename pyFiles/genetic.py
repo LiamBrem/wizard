@@ -1,11 +1,11 @@
 import random
 import pandas as pd
-from round import Round
-from genome import Genome
-from player import EvolvedPlayer, Player
+from pyFiles.round import Round
+from pyFiles.genome import Genome
+from pyFiles.player import EvolvedPlayer, Player
 
 POP_SIZE = 30
-NUM_GENERATIONS = 75
+NUM_GENERATIONS = 50
 ELITE_COUNT = 10
 GAMES_PER_GEN = 200
 
@@ -22,6 +22,7 @@ def evaluate_generation(population, games_per_bot=GAMES_PER_GEN):
         for i in range(0, len(population) - 2):
             group_size = random.randint(3, 6)
             group = population[i:i + group_size - 2]  # 2–4 evolved
+            #group = population[i:i + group_size]
             group += [Player(f"Baseline{j}") for j in range(2)]  # 2 fixed bots
 
             if len(group) < 3:
@@ -123,7 +124,7 @@ def validate_best_genome(genome, games=10000, num_players=5):
         for p in players:
             if p.name == "EvolvedBot":
                 bid_distribution.append(p.bid)
-                score = 20 if p.tricks_won == p.bid else -abs(p.tricks_won - p.bid)
+                score = 20 + 10 * p.tricks_won if p.tricks_won == p.bid else -abs(p.tricks_won - p.bid)
                 score_total += score
                 if p.tricks_won == p.bid:
                     hit_bid_count += 1

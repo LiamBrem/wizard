@@ -40,3 +40,7 @@ tornado==6.5
 traitlets==5.14.3
 tzdata==2025.2
 wcwidth==0.2.13
+Flask==3.0.2
+Flask-SocketIO==5.3.6
+python-socketio==5.11.1
+python-engineio==4.9.0

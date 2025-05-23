@@ -1,5 +1,5 @@
 # utils.py
-from deck import Deck
+from pyFiles.deck import Deck
 
 def resolve_trick_static(trick, lead_suit, trump_suit):
     def card_strength(card):

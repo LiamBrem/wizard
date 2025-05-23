@@ -1,5 +1,5 @@
 import random
-from deck import Deck
+from pyFiles.deck import Deck
 
 
 class Round:
@@ -136,17 +136,16 @@ class Round:
         scores = {}
         for player in self.players:
             if player.tricks_won == player.bid:
-                scores[player.name] = 20 * player.bid
+                scores[player.name] = 20 + 10 * player.bid
             else:
-                scores[player.name] = - \
-                    abs(10 * (player.tricks_won - player.bid))
+                scores[player.name] = -abs(10 * (player.tricks_won - player.bid))
         return scores
 
     def show_results(self):
         pass
         # print("\n--- Round Results ---")
-        # for player in self.players:
-        # print(f"{player.name} - Bid: {player.bid}, Tricks Won: {player.tricks_won}")
+        #for player in self.players:
+            #print(f"{player.name} - Bid: {player.bid}, Tricks Won: {player.tricks_won}")
 
     def get_human_player(self):
         return next(p for p in self.players if p.name == "You")
@@ -176,6 +175,6 @@ class Round:
         self.play_tricks()
         self.show_results()
         scores = self.calculate_scores()
-        self.reset_players()
         self.reset_round_state()
+        #self.reset_players()
         return scores

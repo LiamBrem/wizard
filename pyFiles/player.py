@@ -1,10 +1,9 @@
 import random
-from deck import Deck, Card
-from simulation import simulate_trick_outcome, prob_win
+from pyFiles.simulation import simulate_trick_outcome, prob_win
 import pandas as pd
 import random
-from round import Round
-from genome import Genome
+from pyFiles.round import Round
+from pyFiles.genome import Genome
 
 
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', 'W', 'E']
@@ -199,7 +198,7 @@ def validate_probability_player(games=100, num_players=5):
         for p in players:
             if p.name == "ProbabilityBot":
                 bid_distribution.append(p.bid)
-                score = 20 if p.tricks_won == p.bid else -abs(p.tricks_won - p.bid)
+                score = 20 + 10 * p.tricks_won if p.tricks_won == p.bid else -abs(p.tricks_won - p.bid)
                 score_total += score
                 if p.tricks_won == p.bid:
                     hit_bid_count += 1

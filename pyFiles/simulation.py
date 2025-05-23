@@ -1,5 +1,5 @@
-from deck import Deck, Card
-from utils import resolve_trick_static
+from pyFiles.deck import Deck, Card
+from pyFiles.utils import resolve_trick_static
 import random
 import pandas as pd
 
