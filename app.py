@@ -973,64 +973,72 @@ else:
                     random_hands = generate_random_hands(num_hands, hand_size)
                     st.session_state.random_hands = random_hands
         
-        if 'random_hands' in st.session_state:
+        if 'random_hands' in st.session_state and st.session_state.random_hands is not None:
             # Display summary statistics
             df = st.session_state.random_hands
             
-            st.subheader("Hand Analysis")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                # Distribution of expected tricks
-                fig, ax = plt.subplots(figsize=(10, 6))
-                sns.histplot(df['Expected Tricks'], bins=20, kde=True, ax=ax)
-                ax.set_title('Distribution of Expected Tricks')
-                ax.set_xlabel('Expected Tricks')
-                st.pyplot(fig)
+            if not df.empty:
+                st.subheader("Hand Analysis")
                 
-                # Average probability by card position
-                prob_cols = [col for col in df.columns if col.startswith('Prob')]
-                prob_means = [df[col].mean() for col in prob_cols]
+                col1, col2 = st.columns(2)
                 
-                fig, ax = plt.subplots(figsize=(10, 6))
-                ax.bar(range(1, len(prob_means) + 1), prob_means)
-                ax.set_title('Average Win Probability by Card Position')
-                ax.set_xlabel('Card Position')
-                ax.set_ylabel('Average Win Probability')
-                ax.set_ylim(0, 1)
-                st.pyplot(fig)
-            
-            with col2:
-                # Distribution of suggested bids
-                fig, ax = plt.subplots(figsize=(10, 6))
-                sns.countplot(x='Suggested Bid', data=df, ax=ax)
-                ax.set_title('Distribution of Suggested Bids')
-                ax.set_xlabel('Suggested Bid')
-                st.pyplot(fig)
+                with col1:
+                    # Distribution of expected tricks
+                    fig, ax = plt.subplots(figsize=(10, 6))
+                    sns.histplot(df['Expected Tricks'], bins=20, kde=True, ax=ax)
+                    ax.set_title('Distribution of Expected Tricks')
+                    ax.set_xlabel('Expected Tricks')
+                    st.pyplot(fig)
+                    
+                    # Average probability by card position
+                    prob_cols = [col for col in df.columns if col.startswith('Prob')]
+                    if prob_cols:  # Check if we have probability columns
+                        prob_means = [df[col].mean() for col in prob_cols]
+                        
+                        fig, ax = plt.subplots(figsize=(10, 6))
+                        ax.bar(range(1, len(prob_means) + 1), prob_means)
+                        ax.set_title('Average Win Probability by Card Position')
+                        ax.set_xlabel('Card Position')
+                        ax.set_ylabel('Average Win Probability')
+                        ax.set_ylim(0, 1)
+                        st.pyplot(fig)
                 
-                # Correlation between expected tricks and hand size
-                if len(df) > 1:  # Need at least 2 points for correlation
-                    correlation = df['Expected Tricks'].corr(df.index)
-                    st.metric("Correlation between Expected Tricks and Hand Size", f"{correlation:.2f}")
-            
-            # Sample hands
-            st.subheader("Sample Hands")
-            
-            # Sort by expected tricks
-            df_sorted = df.sort_values('Expected Tricks', ascending=False)
-            
-            # Display top 5 hands
-            st.subheader("Top 5 Hands (Highest Expected Tricks)")
-            st.dataframe(df_sorted.head(5))
-            
-            # Display bottom 5 hands
-            st.subheader("Bottom 5 Hands (Lowest Expected Tricks)")
-            st.dataframe(df_sorted.tail(5))
-            
-            # Full data
-            with st.expander("View All Generated Hands"):
-                st.dataframe(df)
+                with col2:
+                    # Distribution of suggested bids
+                    fig, ax = plt.subplots(figsize=(10, 6))
+                    sns.countplot(x='Suggested Bid', data=df, ax=ax)
+                    ax.set_title('Distribution of Suggested Bids')
+                    ax.set_xlabel('Suggested Bid')
+                    st.pyplot(fig)
+                    
+                    # Correlation between expected tricks and hand size
+                    if len(df) > 1:  # Need at least 2 points for correlation
+                        # Create a series of hand sizes for correlation
+                        hand_sizes = pd.Series([hand_size] * len(df))
+                        correlation = df['Expected Tricks'].corr(hand_sizes)
+                        st.metric("Correlation between Expected Tricks and Hand Size", f"{correlation:.2f}")
+                
+                # Sample hands
+                st.subheader("Sample Hands")
+                
+                # Sort by expected tricks
+                df_sorted = df.sort_values('Expected Tricks', ascending=False)
+                
+                # Display top 5 hands
+                st.subheader("Top 5 Hands (Highest Expected Tricks)")
+                st.dataframe(df_sorted.head(5))
+                
+                # Display bottom 5 hands
+                st.subheader("Bottom 5 Hands (Lowest Expected Tricks)")
+                st.dataframe(df_sorted.tail(5))
+                
+                # Full data
+                with st.expander("View All Generated Hands"):
+                    st.dataframe(df)
+            else:
+                st.warning("No hands were generated. Please try generating hands again.")
+        else:
+            st.info("Click 'Generate Hands' to create and analyze random hands.")
 
 # Add footer
 st.markdown("---")
