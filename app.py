@@ -1013,9 +1013,7 @@ else:
                     
                     # Correlation between expected tricks and hand size
                     if len(df) > 1:  # Need at least 2 points for correlation
-                        # Create a series of hand sizes for correlation
-                        hand_sizes = pd.Series([hand_size] * len(df))
-                        correlation = df['Expected Tricks'].corr(hand_sizes)
+                        correlation = df['Expected Tricks'].corr(df.index)
                         st.metric("Correlation between Expected Tricks and Hand Size", f"{correlation:.2f}")
                 
                 # Sample hands
@@ -1042,4 +1040,4 @@ else:
 
 # Add footer
 st.markdown("---")
-st.markdown("Wizard Card Game Data Explorer | Created with Streamlit")
+st.markdown("Wizard Card Game Data Explorer | By Liam Brem")
