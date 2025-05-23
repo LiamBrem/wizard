@@ -1,44 +1,74 @@
-from pyFiles.deck import Deck, Card
-from pyFiles.utils import resolve_trick_static
+
 import random
-import pandas as pd
+from pyFiles.deck import Deck, Card
 
-
-def simulate_trick_outcome(self_card, player_hand, trump_suit, lead_suit, num_players, simulations=1000):
+def simulate_trick_outcome(card, hand, trump_suit, num_players, round_length):
+    # Simple simulation to estimate probability of winning
+    wins = 0
+    trials = 100
     
-    # simulate many random completions of a trick and return how often self_card wins.
-    win_count = 0
-    all_cards = [Card(suit, rank) for suit in Deck.suits for rank in Deck.ranks]
-    known_cards = player_hand + [self_card]
+    for _ in range(trials):
+        # Create a new deck without the cards we know about
+        deck = Deck()
+        deck.reset()
+        
+        # Remove known cards from deck
+        for c in hand + [card]:
+            for dc in deck.cards[:]:
+                if dc.rank == c.rank and dc.suit == c.suit:
+                    deck.cards.remove(dc)
+                    break
+        
+        # Simulate other players' cards
+        other_cards = []
+        for _ in range(num_players - 1):
+            if deck.cards:
+                other_cards.append(random.choice(deck.cards))
+        
+        # Determine if our card would win
+        if card.rank == 'W':  # Wizard always wins
+            wins += 1
+        elif card.rank == 'E':  # Jester always loses
+            wins += 0
+        else:
+            # Check if any other card beats ours
+            our_strength = (Deck.ranks.index(card.rank), card.suit == trump_suit)
+            beaten = False
+            
+            for other in other_cards:
+                if other.rank == 'W':  # Wizard beats everything
+                    beaten = True
+                    break
+                elif other.rank == 'E':  # Jester loses to everything
+                    continue
+                else:
+                    other_strength = (Deck.ranks.index(other.rank), other.suit == trump_suit)
+                    if other.suit == card.suit:  # Same suit
+                        if other_strength[0] > our_strength[0]:  # Higher rank
+                            beaten = True
+                            break
+                    elif other.suit == trump_suit:  # Trump beats non-trump
+                        beaten = True
+                        break
+            
+            if not beaten:
+                wins += 1
     
-    for _ in range(simulations):
-        # Step 1: Build a pool of remaining unknown cards
-        remaining_deck = [card for card in all_cards if card not in known_cards]
+    return wins / trials
 
-        # Step 2: Randomly deal to opponents
-        simulated_trick = [(0, self_card)]  # You play first
-        for pid in range(1, num_players):
-            opp_card = random.choice(remaining_deck)
-            simulated_trick.append((pid, opp_card))
-            remaining_deck.remove(opp_card)
-
-        # Step 3: Resolve trick
-        winner_idx = resolve_trick_static(simulated_trick, lead_suit, trump_suit)
-        if winner_idx == 0:
-            win_count += 1
-
-    return win_count / simulations
-
-
-
-def prob_win(card, hand, trump_suit, num_players, round_number, use_cutoff=2):
-    lead_suit = card.suit if card.rank not in ('W', 'E') else None
-    return simulate_trick_outcome(
-        self_card=card,
-        player_hand=[c for c in hand if c != card],
-        trump_suit=trump_suit,
-        lead_suit=lead_suit,
-        num_players=num_players
-    )
-
-
+def prob_win(card, hand, trump_suit, num_players, round_length):
+    # Simplified probability calculation
+    if card.rank == 'W':  # Wizard
+        return 0.95  # Almost certain win
+    elif card.rank == 'E':  # Jester
+        return 0.05  # Almost certain loss
+    
+    # For normal cards
+    if trump_suit and card.suit == trump_suit:
+        # Trump cards
+        rank_value = Deck.ranks.index(card.rank) / len(Deck.ranks)
+        return 0.5 + (rank_value * 0.4)  # 0.5 to 0.9 based on rank
+    else:
+        # Non-trump cards
+        rank_value = Deck.ranks.index(card.rank) / len(Deck.ranks)
+        return 0.2 + (rank_value * 0.3)  # 0.2 to 0.5 based on rank

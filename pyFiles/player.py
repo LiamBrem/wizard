@@ -153,11 +153,11 @@ class HumanPlayer(Player):
         self._pending_card = None
 
     def set_bid(self, bid_value):
-        """Set bid from the Streamlit interface."""
+        #Set bid from the Streamlit interface.
         self._pending_bid = bid_value
 
     def set_card(self, card):
-        """Set card from the Streamlit interface (must be a Card object)."""
+        # Set card from the Streamlit interface (must be a Card object).
         self._pending_card = card
 
     def make_bid(self, trump_suit, round_number, position, total_players, bids_so_far=None):
@@ -225,8 +225,6 @@ def validate_probability_player(games=100, num_players=5):
     })
 
     return df, bid_freq
-
-
 
 def compare_players(evolved_genome, games=1000, num_players=5):
     evo_bot = EvolvedPlayer("Evolved", Genome(genes=evolved_genome))
